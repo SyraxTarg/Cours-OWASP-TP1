@@ -1,0 +1,21 @@
+{
+  "name": "tpv2",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "private": true,
+  "scripts": {
+    "build": "npm run build --prefix frontend && npm run build --prefix backend",
+    "start": "set NODE_ENV=production&& npm run start --prefix backend",
+    "dev": "concurrently \"npm run serve --prefix frontend\" \"npm run dev --prefix backend\"",
+    "seed": "npm run seed --prefix backend",
+    "setup": "npm i --prefix frontend && npm i --prefix backend && npm i && npm run seed"
+  },
+  "keywords": [],
+  "author": "ThaySan",
+  "license": "MIT",
+  "type": "commonjs",
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}
