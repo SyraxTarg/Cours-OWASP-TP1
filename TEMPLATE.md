@@ -74,7 +74,7 @@ Il faut échapper les entrées utilisateur en utilisant express-validator, en en
 
 - **Localisation :** `controllers/articles.ts`, ligne n°`33` : fonction get.
 - **Preuve de concept**
-Envoyer `/' or1=1 --` à la place de l'id attendu pour que tous soient retournés.
+Envoyer `/api/articles/' or1=1 --` à la place de l'id attendu pour que tous soient retournés.
 - **Cause**
 En fait, dans le code on fait un db.get donc il n'y aura qu'un article qui sera retourné. Or, en mettant cette injection dans l'url on voit qu'un article est quand meme retourné alors que dans le cas ou un article n'existe pas on tombre sur un "loading ...", ce qui veut dire que l'injection à réussi. Si on remplace le db.get par un db.all on voir que tous les articles ont été retournés. La requête sql n'est pas préparée.
 - **Remédiation :**
