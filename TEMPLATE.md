@@ -109,3 +109,30 @@ const user = await db.get(`SELECT id, username, role FROM users WHERE id = ?`, u
 - **Cause :** L'addresse donnée par l'utilisateur n'est pas vérifiée donc je peux mettre n'importe quelle addressse malveillante et leur donner une porte d'entrée à mon serveur. Je ne limite pas non plus le nombre de requetes envoyées je peux donc me rendre complice d'un DOS vers un autre dite. Enfin, vu que mon fetch est un POST ça va causer des problèmes si je mets une addresse interne à mon serveur, des actions pourront être déclenchées sans que je ne le sache.
 - **Remédiation :** Il faut vérifier l'url donnée en mettant en place un whitelist et blacklist des url. Il faudrait aussi limiter le nombre de requêtes envoyées en une seconde par exemple.
 
+### 3.9 Le cookie n'est pas sécurisé
+
+- **Localisation :** `/backend/src/intex.ts` dans `app.use(session({...`
+- **Preuve de concept :** Dans la DevTools par défaut du navigateur, dans la partie des cookies, le cookie n'est pas secure, et le SameSite n'est pas défini. Certes, le httpOnly est true mais c'est la valeur par défaut.
+- **Cause :** Il n'y a aucune configuration du cookie lors du setup de la session, il est juste avec la sécurité par défaut.
+- **Remédiation :** Spécifier la configuration du cookie avec httpOnly explicitement true, secure true (au moins en production) et SameSite Lax ou Strict. Avec cette configuration, le cookie sera SameSite Lax, secure en prod et on sera sûr qu'il est toujours httpOnly.
+```javascript
+  app.use(
+    session({
+      store: new SQLiteStore({
+        db: "sessions.db",
+        dir: "./data",
+        expires: 1 * 60 * 60, // 1 heure
+      }),
+      secret: "secret-key",
+      resave: false,
+      saveUninitialized: false,
+      name: "session",
+      cookie: {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        maxAge: 1000 * 60 * 60,
+      },
+    })
+  );
+```
