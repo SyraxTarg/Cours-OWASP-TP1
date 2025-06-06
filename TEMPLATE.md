@@ -81,7 +81,7 @@ if (!user) return res.status(401).json({ error: "Invalid credentials." });
 ### 3.6 Broken Access Control dans l'api
 
 - **Localisation :** La fonction `authMiddleware` dans `/backend/src/middlewares/auth.ts`.
-- **Preuve de concept :** Connectée en tant qu'utilisateur admin (id: 3) j'ai pu modifier un article qui ne m'appartient pas, l'article 2.
+- **Preuve de concept :** Connectée en tant qu'utilisateur bob (id: 2) j'ai pu modifier un article qui ne m'appartient pas, l'article 4.
 - **Cause :** Le auth middle ware vérifie seulement si l'utilisateur est connecté peu importe s'il s'agit de mon article ou non.
 - **Remédiation :** il faut changer le middleware ou carrément en faire un autre qui vérifie l'identité de l'utilisateur connecté et eventuellement faire une double vérification dans les fonctions d'action.
 
