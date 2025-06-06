@@ -85,3 +85,27 @@ if (!user) return res.status(401).json({ error: "Invalid credentials." });
 - **Cause :** Le auth middle ware vérifie seulement si l'utilisateur est connecté peu importe s'il s'agit de mon article ou non.
 - **Remédiation :** il faut changer le middleware ou carrément en faire un autre qui vérifie l'identité de l'utilisateur connecté et eventuellement faire une double vérification dans les fonctions d'action.
 
+### 3.7 Le mot de passe du user connecté est visible en clair depuis le navigateur
+
+- **Localisation :** La fonction `me` dans `/backend/src/controllers/auth.ts`.
+- **Preuve de concept :** J'ai installé l'extension Vue DevTools sur mon navigateur, j'ai cherché dans la navbar (parce qu'elle a forcément un objet user puisqu'il y a son username). J'ai trouvé l'objet entier en clair. Ce qui veut dire que si bob quitte son poste sans verrouiller son PC, n'importe qui peur faire cette manipulation et trouver son mot de passe en clair.
+```
+user : Object (Ref)
+  id : 2
+  password : 123456
+  role : user
+  username : bob
+```
+- **Cause :** Toutes les données du user sont récupérées lors de la requête dans la fonction `me`. Cela s'additionne avec le 3.1 : le mot de passe n'est pas hashé (mais c'est encore un autre problème). Le mot de passe n'est pas utile à l'utilisateur, puisqu'il le connait déjà, c'est même sa façon de prouver qu'il est bien qui il prétend être.
+- **Remédiation :** Il ne faut retourner que les informations indispensables lors de la requête SQL. Dans notre cas, id, username et role suffisent amplement. Il est inutile voire dangereux de renvoyer aussi le mot de passe, d'autant plus en clair.
+```javascript
+const user = await db.get(`SELECT id, username, role FROM users WHERE id = ?`, userId);
+```
+
+### 3.8 Blind SSRF (server-side request forgery)
+
+- **Localisation :** La fonction `export` dans `/backend/src/controllers/articles.ts`.
+- **Preuve de concept :** La fonction d'export envoie mes articles sous forme de json à n'importe quelle addresse sans la vérifier
+- **Cause :** L'addresse donnée par l'utilisateur n'est pas vérifiée donc je peux mettre n'importe quelle addressse malveillante et leur donner une porte d'entrée à mon serveur. Je ne limite pas non plus le nombre de requetes envoyées je peux donc me rendre complice d'un DOS vers un autre dite. Enfin, vu que mon fetch est un POST ça va causer des problèmes si je mets une addresse interne à mon serveur, des actions pourront être déclenchées sans que je ne le sache.
+- **Remédiation :** Il faut vérifier l'url donnée en mettant en place un whitelist et blacklist des url. Il faudrait aussi limiter le nombre de requêtes envoyées en une seconde par exemple.
+

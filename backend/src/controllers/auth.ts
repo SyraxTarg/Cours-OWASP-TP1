@@ -28,7 +28,7 @@ export async function logout(_req: Request, res: Response): Promise<any> {
 // Retourne les infos de l’utilisateur connecté
 export async function me(req: Request, res: Response): Promise<any> {
   const userId = req.session.user!.id
-  const user = await db.get(`SELECT * FROM users WHERE id = ?`, userId);
+  const user = await db.get(`SELECT id, username, role FROM users WHERE id = ?`, userId);
   if (!user) return res.status(401).json({ error: 'Not authenticated' });
   res.json(user);
 }
