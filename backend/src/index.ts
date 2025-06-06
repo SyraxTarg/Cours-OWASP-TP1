@@ -17,6 +17,7 @@ import errorHandler from "@/middlewares/errorHandler";
 async function main() {
   const devPort = process.env.DEV_PORT;
   const httpsPort = process.env.HTTPS_PORT;
+  const sessionSecret = process.env.SESSION_SECRET;
 
   await initDb();
   const SQLiteStore = SQLiteStoreFactory(session) as new (opts: any) => Store; // Problème de typage connect-sqlite
@@ -40,7 +41,7 @@ async function main() {
         dir: "./data",
         expires: 1 * 60 * 60, // 1 heure
       }),
-      secret: "secret-key",
+      secret: sessionSecret!,
       resave: false,
       saveUninitialized: false,
       name: "session",

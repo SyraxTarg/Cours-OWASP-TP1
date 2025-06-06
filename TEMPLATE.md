@@ -52,7 +52,7 @@
 
 - **Localisation :** `controllers/articles.ts`, ligne n°`33` : fonction get.
 - **Preuve de concept**
-Envoyer `/api/articles/' or1=1 --` à la place de l'id attendu pour que tous soient retournés.
+  Envoyer `/api/articles/' or1=1 --` à la place de l'id attendu pour que tous soient retournés.
 - **Cause**
   En fait, dans le code on fait un db.get donc il n'y aura qu'un article qui sera retourné. Or, en mettant cette injection dans l'url on voit qu'un article est quand meme retourné alors que dans le cas ou un article n'existe pas on tombre sur un "loading ...", ce qui veut dire que l'injection à réussi. Si on remplace le db.get par un db.all on voir que tous les articles ont été retournés. La requête sql n'est pas préparée.
 - **Remédiation :**
@@ -65,7 +65,7 @@ Envoyer `/api/articles/' or1=1 --` à la place de l'id attendu pour que tous soi
 ### 3.5 Le login indique si c'est le username ou le password qui est faux (trop explicite)
 
 - **Localisation :** La fonction `login` dans `/backend/src/controllers/auth.ts`.
-- **Preuve de concept :** Quand j'entre "bobi" et "123456" dans le formulaire de login, je reçois l'erreur "User not exist, mais quand j'entre "bob" et "1234567", je reçois "Invalid password"
+- **Preuve de concept :** Quand j'entre "bobi" et "123456" dans le formulaire de login, je reçois l'erreur "User not exist", mais quand j'entre "bob" et "1234567", je reçois "Invalid password"
 - **Cause :** On vérifie séparément la correspondance avec le username et la correspondance avec le mot de passe, et 2 erreurs différentes sont renvoyées.
 - **Remédiation :** fetch le username et le password en même temps comme ça on ne sait pas lequel ne correspond pas :
 
@@ -89,6 +89,7 @@ if (!user) return res.status(401).json({ error: "Invalid credentials." });
 
 - **Localisation :** La fonction `me` dans `/backend/src/controllers/auth.ts`.
 - **Preuve de concept :** J'ai installé l'extension Vue DevTools sur mon navigateur, j'ai cherché dans la navbar (parce qu'elle a forcément un objet user puisqu'il y a son username). J'ai trouvé l'objet entier en clair. Ce qui veut dire que si bob quitte son poste sans verrouiller son PC, n'importe qui peur faire cette manipulation et trouver son mot de passe en clair.
+
 ```
 user : Object (Ref)
   id : 2
@@ -96,10 +97,15 @@ user : Object (Ref)
   role : user
   username : bob
 ```
+
 - **Cause :** Toutes les données du user sont récupérées lors de la requête dans la fonction `me`. Cela s'additionne avec le 3.1 : le mot de passe n'est pas hashé (mais c'est encore un autre problème). Le mot de passe n'est pas utile à l'utilisateur, puisqu'il le connait déjà, c'est même sa façon de prouver qu'il est bien qui il prétend être.
 - **Remédiation :** Il ne faut retourner que les informations indispensables lors de la requête SQL. Dans notre cas, id, username et role suffisent amplement. Il est inutile voire dangereux de renvoyer aussi le mot de passe, d'autant plus en clair.
+
 ```javascript
-const user = await db.get(`SELECT id, username, role FROM users WHERE id = ?`, userId);
+const user = await db.get(
+  `SELECT id, username, role FROM users WHERE id = ?`,
+  userId
+);
 ```
 
 ### 3.8 Blind SSRF (server-side request forgery)
@@ -115,24 +121,47 @@ const user = await db.get(`SELECT id, username, role FROM users WHERE id = ?`, u
 - **Preuve de concept :** Dans la DevTools par défaut du navigateur, dans la partie des cookies, le cookie n'est pas secure, et le SameSite n'est pas défini. Certes, le httpOnly est true mais c'est la valeur par défaut.
 - **Cause :** Il n'y a aucune configuration du cookie lors du setup de la session, il est juste avec la sécurité par défaut.
 - **Remédiation :** Spécifier la configuration du cookie avec httpOnly explicitement true, secure true (au moins en production) et SameSite Lax ou Strict. Avec cette configuration, le cookie sera SameSite Lax, secure en prod et on sera sûr qu'il est toujours httpOnly.
+
 ```javascript
-  app.use(
-    session({
-      store: new SQLiteStore({
-        db: "sessions.db",
-        dir: "./data",
-        expires: 1 * 60 * 60, // 1 heure
-      }),
-      secret: "secret-key",
-      resave: false,
-      saveUninitialized: false,
-      name: "session",
-      cookie: {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
-        maxAge: 1000 * 60 * 60,
-      },
-    })
-  );
+app.use(
+  session({
+    store: new SQLiteStore({
+      db: "sessions.db",
+      dir: "./data",
+      expires: 1 * 60 * 60, // 1 heure
+    }),
+    secret: "secret-key",
+    resave: false,
+    saveUninitialized: false,
+    name: "session",
+    cookie: {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 1000 * 60 * 60,
+    },
+  })
+);
+```
+
+### 3.10 Le secret de la session est en clair dans index.ts
+
+- **Localisation :** `/backend/src/intex.ts` dans `app.use(session({...`
+- **Preuve de concept :** `secret: "secret-key",`, c'est de toute évidence trop court et surtout, si ce code est push en public sur un repo distant, tout le monde pourra connaitre ce "secret".
+- **Cause :** Il est en clair et trop court
+- **Remédiation :** Ce secret devrait être défini dans l'environnement, qui ne va jamais sur un repo distant. Et il doit être beaucoup plus long.
+
+```env
+SESSION_SECRET=0QHVRH5X3TNXL626FQ4FJ5J328J1A3ZK1ZOI0YUPSYIREHXGKY
+```
+
+```javascript
+const sessionSecret = process.env.SESSION_SECRET;
+app.use(
+  session({
+    ...
+    secret: sessionSecret!,
+    ...
+  })
+);
 ```
