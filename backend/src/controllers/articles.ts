@@ -33,7 +33,10 @@ export async function create(req: Request, res: Response): Promise<any> {
 export async function get(req: Request, res: Response): Promise<any> {
   const articleId = req.params.id;
   const userId = req.session.user!.id;
-  const article = await db.get(`SELECT * FROM articles WHERE id='${articleId}' AND authorId=${userId}`);
+  const article = await db.run(
+    `SELECT * FROM articles WHERE id=? AND authorId=?`,
+    articleId, userId
+  );
   if (!article) return res.sendStatus(404)
   res.json(article);
 }

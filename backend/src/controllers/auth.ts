@@ -14,9 +14,8 @@ export async function register(req: Request, res: Response): Promise<any> {
 // Connexion
 export async function login(req: Request, res: Response): Promise<any> {
   const { username, password } = req.body;
-  const user = await db.get(`SELECT * FROM users WHERE username = ?`, username);
-  if (!user) return res.status(401).json({ error: 'User not exist' });
-  if (user.password !== password) return res.status(401).json({ error: 'Invalid password' });
+  const user = await db.get(`SELECT * FROM users WHERE username = ? AND password = ?`, username, password);
+  if (!user) return res.status(401).json({ error: 'Invalid credentials.' });
   req.session.user = { id: user.id, role: user.role };
   res.json(user);
 }
