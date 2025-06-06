@@ -4397,6 +4397,8 @@ totalist@^3.0.0:
 "tpv2@file:..":
   version "1.0.0"
   resolved "file:.."
+  dependencies:
+    yarn "^1.22.22"
 
 tr46@~0.0.3:
   version "0.0.3"

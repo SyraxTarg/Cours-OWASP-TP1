@@ -42,3 +42,17 @@
   - Valider que `birthday` soit bien une date au format dd/mm/YYY.
 
 ---
+
+
+### 3.2 Les mots de passe ne sont pas hashés dans la base de données
+- **Localisation :** la fonction `register` dans `/backend/src/controllers/auth.ts` et la base de données database.db.
+- **Preuve de concept :** Il suffit de copier-coller les credentials de la base de données pour se login.
+- **Cause :** Les mots de passe sont enregistrés tels quels dans la base de données.
+- **Remédiation :** Utiliser un algorithme de hashage type bcrypt avant d'enregistrer les données dans la base de données.
+
+
+### 3.3 Les mots de passe faibles sont autorisés
+- **Localisation :** la fonction `register` dans `/backend/src/controllers/auth.ts` et la base de données database.db.
+- **Preuve de concept :** Le mot de passe de l'utilisateur "bob" dans la base de données est "123456".
+- **Cause :** Il n'est à aucune moment demandé un mot de passe fort.
+- **Remédiation :** Le front et le back doivent se mettre d'accord sur une liste de caractères à inclure dans le mot de passe, ainsi qu'une longueur. Ca peut être par exemple : au moins 8 caractères, au moins une lettre majuscule, une lettre minuscule, un chiffre et un caratère spécial. 
