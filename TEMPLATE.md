@@ -57,12 +57,29 @@
 - **Cause :** Il n'est à aucune moment demandé un mot de passe fort.
 - **Remédiation :** Le front et le back doivent se mettre d'accord sur une liste de caractères à inclure dans le mot de passe, ainsi qu'une longueur. Ca peut être par exemple : au moins 8 caractères, au moins une lettre majuscule, une lettre minuscule, un chiffre et un caratère spécial.
 
-### 3.3. XSS dans la route `GET /articles/edit`
+
+
+### 3.4. XSS dans la route `GET /articles/edit`
 
 - **Localisation :** `controllers/articles.ts`, ligne n°`42` : fonction modify.
-**Preuve de concept**
+- **Preuve de concept**
 Envoyer `</p><img src="x" onError="alert(1)"/><p>` et une alerte va pop.
-**Cause**
+- **Cause**
 Les entrées utilisateurs n'ont pas été chapées et donc on peut y ajouter des balises qui seront interprétées comme tel et non pas comme du simple texte.
-**Remédiation :**
+- **Remédiation :**
 Il faut échapper les entrées utilisateur en utilisant express-validator, en enlevant les caractères spéciaux à la main ou otut simplement en utilisant un orm.
+
+
+### 3.5. Injection SQL dans la route `GET /articles/`
+
+- **Localisation :** `controllers/articles.ts`, ligne n°`33` : fonction get.
+- **Preuve de concept**
+Envoyer `/' or1=1 --` à la place de l'id attendu pour que tous soient retournés.
+- **Cause**
+En fait, dans le code on fait un db.get donc il n'y aura qu'un article qui sera retourné. Or, en mettant cette injection dans l'url on voit qu'un article est quand meme retourné alors que dans le cas ou un article n'existe pas on tombre sur un "loading ...", ce qui veut dire que l'injection à réussi. Si on remplace le db.get par un db.all on voir que tous les articles ont été retournés. La requête sql n'est pas préparée.
+- **Remédiation :**
+Il faut préparer la requête en faisant quelque chose comme :
+
+```javascipt
+(`SELECT * FROM articles WHERE id=? AND authorId=?`, articleId, authorId)
+```
