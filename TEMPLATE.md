@@ -1,8 +1,8 @@
 # TP - Rapport de Recherche de Vulnérabilités et Remédiations
 
 ## 1. Informations Générales
-- **Nom / Binôme :**  
-- **Date :**
+- **Saint-Marc Maimiti / Sbaffe Claire :**  
+- **Date : 06-06-2025**
 
 ---
 

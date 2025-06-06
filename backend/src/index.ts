@@ -28,7 +28,7 @@ async function main() {
   app.use(cors({
     origin: process.env.NODE_ENV === 'production'
       ? `https://localhost:${httpsPort}`
-      : `http://localhost:8080`,
+      : `http://localhost:8081`,
     credentials: true
   }));
 
